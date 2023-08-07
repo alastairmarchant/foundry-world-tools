@@ -1,0 +1,15 @@
+{
+  "_output_dir": "/home/alastair/github",
+  "_repo_dir": "/home/alastair/.cookiecutters/cookiecutter-hypermodern-python",
+  "_template": "gh:cjolowicz/cookiecutter-hypermodern-python",
+  "author": "Alastair Marchant",
+  "copyright_year": "2023",
+  "development_status": "Development Status :: 4 - Beta",
+  "email": "alastairmarchant.am@gmail.com",
+  "friendly_name": "Foundry World Tools",
+  "github_user": "alastairmarchant",
+  "license": "MIT",
+  "package_name": "fwt",
+  "project_name": "foundry-world-tools",
+  "version": "0.0.0"
+}
