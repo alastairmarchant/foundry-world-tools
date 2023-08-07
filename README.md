@@ -1,10 +1,45 @@
-# Foundry World Tools (FWT)
+# Foundry World Tools
+
+[![PyPI](https://img.shields.io/pypi/v/foundry-world-tools.svg)][pypi_]
+[![Status](https://img.shields.io/pypi/status/foundry-world-tools.svg)][status]
+[![Python Version](https://img.shields.io/pypi/pyversions/foundry-world-tools)][python version]
+[![License](https://img.shields.io/pypi/l/foundry-world-tools)][license]
+
+[![Read the documentation at https://foundry-world-tools.readthedocs.io/](https://img.shields.io/readthedocs/foundry-world-tools/latest.svg?label=Read%20the%20Docs)][read the docs]
+[![Tests](https://github.com/alastairmarchant/foundry-world-tools/workflows/Tests/badge.svg)][tests]
+[![Codecov](https://codecov.io/gh/alastairmarchant/foundry-world-tools/branch/main/graph/badge.svg)][codecov]
+
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)][pre-commit]
+[![Black](https://img.shields.io/badge/code%20style-black-000000.svg)][black]
+
+[pypi_]: https://pypi.org/project/foundry-world-tools/
+[status]: https://pypi.org/project/foundry-world-tools/
+[python version]: https://pypi.org/project/foundry-world-tools
+[read the docs]: https://foundry-world-tools.readthedocs.io/
+[tests]: https://github.com/alastairmarchant/foundry-world-tools/actions?workflow=Tests
+[codecov]: https://app.codecov.io/gh/alastairmarchant/foundry-world-tools
+[pre-commit]: https://github.com/pre-commit/pre-commit
+[black]: https://github.com/psf/black
 
 A Python CLI for working with Foundry VTT project assets on the file system. FWT generally does two things when run; 1st it moves files and 2nd it updates the foundry databases with the new location of the file using a search and replace. In the case of duplicate files FWT does not delete files, only move them to a trash directory at the root of the world directory, if files are to be deleted that must be done manually. FWT makes a backup copy of any database files it rewrites using the original name with a .bak.X at the end. Regular expressions are used as patterns when preforming file renaming and preferred file matching. FWT was created to help me clean up adventure modules exported from other VTTs, and I hope it can help you.
 
 `fwt --help` and `fwt CMD --help` will give brief usage information for the CLI and supported commands.
 
+# Features
+
+- TODO
+
+## Requirements
+
+- TODO
+
 # Installation
+
+You can install _Foundry World Tools_ via [pip] from [PyPI]:
+
+```console
+$ pip install foundry-world-tools
+```
 
 Install using pip `python3 -m pip install git+https://github.com/nathan-sain/foundry-world-tools.git` or if FWT is already installed use `python3 -m pip install -U git+https://github.com/nathan-sain/foundry-world-tools.git` to upgrade to the latest version.
 
@@ -13,7 +48,6 @@ On windows the cli command isn't installed in a directory that is in the binary 
 1. use `python3 -m foundryWorldTools` instead of `fwt` to execute the cli
 2. find the fwt cli command and put it in your path. It's usually in an AppData/Local/Packages/Python3X/Scripts
 3. create a PowerShell function to run the python module with the fwt command `Function fwt {python3 -m foundryWorldTools @Args}`
-
 
 # Notes
 
@@ -27,24 +61,23 @@ fwt is intended to be use interactively on the command line. Where files and dir
 
 ## Config file and presets
 
-A JSON formatted config file can be used to store the location of the Foundry user data directory, dataDir, as well as presets. It is possible to see the config file default location and to open the config file in the default editor using `fwt --edit`. It is also possible to manually set the config file path using `fwt --config=` option. A config file must exist in order to be loaded. If an empty config file is detected it will be populated with the default configuration. To create a new file with the default configuration use the `--mkconfig` flag. When the --mkconfig flag is present, file exists, and isn't empty it will be left as is and a warning will be logged. 
+A JSON formatted config file can be used to store the location of the Foundry user data directory, dataDir, as well as presets. It is possible to see the config file default location and to open the config file in the default editor using `fwt --edit`. It is also possible to manually set the config file path using `fwt --config=` option. A config file must exist in order to be loaded. If an empty config file is detected it will be populated with the default configuration. To create a new file with the default configuration use the `--mkconfig` flag. When the --mkconfig flag is present, file exists, and isn't empty it will be left as is and a warning will be logged.
 
-* create a default config file in the default path
-    `fwt --mkconfig`
-* create a default config file in a specific path
-    `fwt --mkconfig --config=~/fwt.json`
+- create a default config file in the default path
+  `fwt --mkconfig`
+- create a default config file in a specific path
+  `fwt --mkconfig --config=~/fwt.json`
 
 fwt supports storing presets for commands which allow consistent application of options across multiple uses and prevent the need to type long commands repeatedly. fwt ships with some default presets setup in the config file.
 
-
-* `fwt --preset=imgDedup dedup "myadventure"`
-* `fwt --config=~/fwt.json --preset=fixr20 renameall "worlds/myadventure"`
+- `fwt --preset=imgDedup dedup "myadventure"`
+- `fwt --config=~/fwt.json --preset=fixr20 renameall "worlds/myadventure"`
 
 ## Logging
 
 fwt can be configured to log messages to the console or to a file. To specify a file for logging use the `--logfile` option with a path for the log file. File logging is always at the debug level. To change the console logging level use the `--loglevel` option with any of INFO,WARNING,ERROR,DEBUG,QUIET.
 
-* `fwt --logfile=/tmp/lmop_dedup.log --preset=imgDedup dedup /Data/worlds/lmop`
+- `fwt --logfile=/tmp/lmop_dedup.log --preset=imgDedup dedup /Data/worlds/lmop`
 
 ## Deleting files
 
@@ -54,58 +87,67 @@ fwt doesn't delete any files. When file paths are removed from the the database 
 
 ## Commands
 
-* **dedup:** scan the files in the world directory to detect duplicate files and move all but one of the duplicates into a Trash directory. Files can be filtered by extension. Duplicates can be detected by files with the same base name in the same directory or by comparing the contents of all of the files in the world directory. The preferred duplicate can be determined using a regular expression pattern. Patterns can be prefixed with the string `<project_dir>` which will be substituted for the absolute path of the project director for more precise matching.
-    * Example 1: Using filename duplicate detection with the option `--byname` the files "big_map.png" and "big_map.webp" in the same directory are duplicate assets. Without the --preferred option the first in the order of detection will be considered the preferred asset and all of the other duplicates will be moved to a trash directory. If webp files are preferred the option `--preferred=".*webp"` can be used in which case "big_map.png" will be moved the the Trash folder.
-    
-        `fwt dedup --byname --ext=".png" --ext=".webp" --preferred=".*webp" /fvtt/Data/worlds/myadventure` 
-        
-    * Example 2: Using content duplicate detection with the option `--bycontent` files "scenes/token1.png" "characters/goblin_token.png" "journal/token5.png" are determined to be duplicates. Without the --preferred option the first in the order of detection is considered the preferred asset and all others will be moved to a trash directory. If duplicates in the characters directory are preferred then the option --preferred="characters/.*" will cause the "characters/goblin_token.png" file to kept and "scenes/token1.png" and "journal/token5.png" to be moved to the trash directory.
-    
-         `fwt --bycontent --prefered="characters/.*" /fvtt/Data/worlds/myadventure`
-    
-    * Example 3: Using a preset called imgDedup and excluding all directories named sides from being scanned
+- **dedup:** scan the files in the world directory to detect duplicate files and move all but one of the duplicates into a Trash directory. Files can be filtered by extension. Duplicates can be detected by files with the same base name in the same directory or by comparing the contents of all of the files in the world directory. The preferred duplicate can be determined using a regular expression pattern. Patterns can be prefixed with the string `<project_dir>` which will be substituted for the absolute path of the project director for more precise matching.
 
-         `fwt --preset=imgDedup dedup --exclude-dir=sides myadventure`
+  - Example 1: Using filename duplicate detection with the option `--byname` the files "big_map.png" and "big_map.webp" in the same directory are duplicate assets. Without the --preferred option the first in the order of detection will be considered the preferred asset and all of the other duplicates will be moved to a trash directory. If webp files are preferred the option `--preferred=".*webp"` can be used in which case "big_map.png" will be moved the the Trash folder.
 
-* **rename:** rename a asset in the database and move / copy the asset. This works on file assets and world directories.
-    * Example: You accidentally uploaded a tile to the root of your FVTT user data directory  and you want it to be in tiles directory of the world of your current working directory. 
+    `fwt dedup --byname --ext=".png" --ext=".webp" --preferred=".*webp" /fvtt/Data/worlds/myadventure`
 
-        `fwt rename ../../cart.png tiles/`
-    * Example: You uploaded a asset into the shared Foundry Data directory and used it in all of your worlds, but you wish to have a separate copy in a world directory so you can copy the world to another server. In this case you can use the --keep-src option to leave the original asset in place for the other worlds. When moving files outside of the project directory tt is best use --dir=/fvtt/Data/worlds/adventure to specify which project database files should be updated. 
+  - Example 2: Using content duplicate detection with the option `--bycontent` files "scenes/token1.png" "characters/goblin_token.png" "journal/token5.png" are determined to be duplicates. Without the --preferred option the first in the order of detection is considered the preferred asset and all others will be moved to a trash directory. If duplicates in the characters directory are preferred then the option --preferred="characters/.\*" will cause the "characters/goblin_token.png" file to kept and "scenes/token1.png" and "journal/token5.png" to be moved to the trash directory.
 
-        `fwt rename --keep-src /fvtt/Data/shared/token1.png /fvtt/Data/worlds/adventure/characters/elfman/token1.png`
-    * Example: You want to create a new world based on an exiting world: 
+    `fwt --bycontent --prefered="characters/.*" /fvtt/Data/worlds/myadventure`
 
-        `fwt rename --keep-src firstworld firstworldPart2`
+  - Example 3: Using a preset called imgDedup and excluding all directories named sides from being scanned
 
-* **renameall:** scan the world directory and rename files based on a pattern. Currently this only has one option --remove, which specifies a pattern for removing characters from file names.
-    * Example: Replace all of the underscores with dashes in the file names 
+    `fwt --preset=imgDedup dedup --exclude-dir=sides myadventure`
 
-        `fwt renameall --replace '/_/-/' /fvtt/Data/worlds/adventure`
-    * Example: Convert all of the file names to lower case
+- **rename:** rename a asset in the database and move / copy the asset. This works on file assets and world directories.
 
-        `fwt renameall --lower adventure`
+  - Example: You accidentally uploaded a tile to the root of your FVTT user data directory and you want it to be in tiles directory of the world of your current working directory.
 
-* **download:** A command to gather image locations and determine if the images are hosted remotely. In the case that images are remotely hosted they are downloaded to the local project directory. The download location is determined by inspecting the other image locations of the object. If any of them are local then the remote file is downloaded to the same directory as existing images. If all images are remote then the option --asset-dir is referenced and a directory by that name in the project root is used. Both --type and --asset-dir are required options. **currently the only actors and item types are supported**
-    * Example: You have actors which contain links to remote assets in their biography HTML and you want downloads for new actor images to be in <world-dir>/actors:
+    `fwt rename ../../cart.png tiles/`
 
-        `fwt download --type=actors --asset-dir=actors worlds/lmop`
+  - Example: You uploaded a asset into the shared Foundry Data directory and used it in all of your worlds, but you wish to have a separate copy in a world directory so you can copy the world to another server. In this case you can use the --keep-src option to leave the original asset in place for the other worlds. When moving files outside of the project directory tt is best use --dir=/fvtt/Data/worlds/adventure to specify which project database files should be updated.
 
-    * Example: you have items which use remote links for the item image
+    `fwt rename --keep-src /fvtt/Data/shared/token1.png /fvtt/Data/worlds/adventure/characters/elfman/token1.png`
 
-        `fwt download --type=items --asset-dir=items worlds/lmop`
+  - Example: You want to create a new world based on an exiting world:
 
-* **pull:** A command to copy all assets stored in directories outside of the project directory. If a project has file paths to a shared asset directory or a project has file paths to a module this command can be used to copy all of the files into the project directory. Allow the project to be copied to another server without depending on existence of the external assets. 
-    * Example: You have scene backgrounds stored in a content module and you want to copy them into your project directory
+    `fwt rename --keep-src firstworld firstworldPart2`
 
-        `fwt pull --from=/Data/modules/madmaps --to=/Data/worlds/darkest-hour`
+- **renameall:** scan the world directory and rename files based on a pattern. Currently this only has one option --remove, which specifies a pattern for removing characters from file names.
+
+  - Example: Replace all of the underscores with dashes in the file names
+
+    `fwt renameall --replace '/_/-/' /fvtt/Data/worlds/adventure`
+
+  - Example: Convert all of the file names to lower case
+
+    `fwt renameall --lower adventure`
+
+- **download:** A command to gather image locations and determine if the images are hosted remotely. In the case that images are remotely hosted they are downloaded to the local project directory. The download location is determined by inspecting the other image locations of the object. If any of them are local then the remote file is downloaded to the same directory as existing images. If all images are remote then the option --asset-dir is referenced and a directory by that name in the project root is used. Both --type and --asset-dir are required options. **currently the only actors and item types are supported**
+
+  - Example: You have actors which contain links to remote assets in their biography HTML and you want downloads for new actor images to be in <world-dir>/actors:
+
+    `fwt download --type=actors --asset-dir=actors worlds/lmop`
+
+  - Example: you have items which use remote links for the item image
+
+    `fwt download --type=items --asset-dir=items worlds/lmop`
+
+- **pull:** A command to copy all assets stored in directories outside of the project directory. If a project has file paths to a shared asset directory or a project has file paths to a module this command can be used to copy all of the files into the project directory. Allow the project to be copied to another server without depending on existence of the external assets.
+
+  - Example: You have scene backgrounds stored in a content module and you want to copy them into your project directory
+
+    `fwt pull --from=/Data/modules/madmaps --to=/Data/worlds/darkest-hour`
 
 # Complete Example
+
 This example shows how to remove duplicate PNG files, replace all PNG images with WEBP images using the cwebp command, and then remove undesirable characters from the remaining files. The adventure1 world has many duplicate images. Some of the duplicates are stored in a folder called images/misc and it is preferred for images to be stored in the characters, journal, and scenes directories. **On windows don't use -rf with the rm command**
 
 ```sh
 ### Dedup by content to find extra files
-fwt dedup --bycontent --ext ".png" --preferred="<project_dir>/characters.*token.*" --preferred="<project_dir>/characters" --preferred="<project_dir>/journal" --preferred="<project_dir>/scenes" /fvtt/Data/worlds/adventure1 
+fwt dedup --bycontent --ext ".png" --preferred="<project_dir>/characters.*token.*" --preferred="<project_dir>/characters" --preferred="<project_dir>/journal" --preferred="<project_dir>/scenes" /fvtt/Data/worlds/adventure1
 
 # Load the adventure in Foundry and check to make sure everything loads properly then delete Trash and backups
 rm -rf /fvtt/Data/worlds/adventure1/trash
@@ -135,19 +177,24 @@ fwt renameall --remove="[0-9]{3}_-_" --replace="/_+/-/" --lower worlds/adventure
 # Config file example
 
 ```json
-{   
-    "dataDir":"/fvtt/Data",
-    "presets":{
-        "imgDedup":{
-            "description":"Find duplicate image files and chooses files from the characters,journal,scenes directories to keep",
-            "command":"dedup",
-            "bycontent":true,
-            "ext": [".png",".jpg",".jpeg",".gif",".webp"],
-            "preferred":["<project_dir>/characters.*token.*","<project_dir>/characters","<project_dir>/journal.*token.*","<project_dir>/journal","<project_dir>/scenes"]
-        }
+{
+  "dataDir": "/fvtt/Data",
+  "presets": {
+    "imgDedup": {
+      "description": "Find duplicate image files and chooses files from the characters,journal,scenes directories to keep",
+      "command": "dedup",
+      "bycontent": true,
+      "ext": [".png", ".jpg", ".jpeg", ".gif", ".webp"],
+      "preferred": [
+        "<project_dir>/characters.*token.*",
+        "<project_dir>/characters",
+        "<project_dir>/journal.*token.*",
+        "<project_dir>/journal",
+        "<project_dir>/scenes"
+      ]
     }
+  }
 }
-
 ```
 
 # Git diff utilities
@@ -157,12 +204,15 @@ fwt renameall --remove="[0-9]{3}_-_" --replace="/_+/-/" --lower worlds/adventure
 With git configured to use nedb2yaml as a textconv filter it is possible to view human readable diffs of nedb files presented in YAML format. Add the following git config snippets to configure git diff to use nedb2yaml.
 
 `.git/config`
+
 ```
 [diff "nedb"]
         textconv = python3 -m foundryWorldTools.nedb2yaml
         cachetextconv = true
 ```
+
 `.gitattributes`
+
 ```
 *.db diff=nedb
 ```
@@ -171,16 +221,13 @@ With git configured to use nedb2yaml as a textconv filter it is possible to view
 
 ## yaml2nedb
 
-It is also possible to convert nedb files to yaml with nedb2yaml make edits and then convert them back to nedb with the utility yaml2nedb. 
+It is also possible to convert nedb files to yaml with nedb2yaml make edits and then convert them back to nedb with the utility yaml2nedb.
 
-
-## __Examples__:
+## **Examples**:
 
 **view a YAML formatted git diff**: [screenshot of VSCode diff and git diff](images/diff.png)
 
     git diff HEAD^:./data/actors.db :./data/actors.db
-
-
 
 Create a YAML version of a Foundry db
 
@@ -189,6 +236,34 @@ Create a YAML version of a Foundry db
 Create a Foundry db from a YAML file
 
     python3 -m foundryWorldTools.yaml2nedb actors.yaml > actors.db
-# Contribution
 
-If you notice a bug or would like to request a feature please the open an issue. Better yet fork the repository and make a pull request!
+## Contributing
+
+Contributions are very welcome.
+To learn more, see the [Contributor Guide].
+
+## License
+
+Distributed under the terms of the [MIT license][license],
+_Foundry World Tools_ is free and open source software.
+
+## Issues
+
+If you encounter any problems,
+please [file an issue] along with a detailed description.
+
+## Credits
+
+This project was generated from [@cjolowicz]'s [Hypermodern Python Cookiecutter] template.
+
+[@cjolowicz]: https://github.com/cjolowicz
+[pypi]: https://pypi.org/
+[hypermodern python cookiecutter]: https://github.com/cjolowicz/cookiecutter-hypermodern-python
+[file an issue]: https://github.com/alastairmarchant/foundry-world-tools/issues
+[pip]: https://pip.pypa.io/
+
+<!-- github-only -->
+
+[license]: https://github.com/alastairmarchant/foundry-world-tools/blob/main/LICENSE
+[contributor guide]: https://github.com/alastairmarchant/foundry-world-tools/blob/main/CONTRIBUTING.md
+[command-line reference]: https://foundry-world-tools.readthedocs.io/en/latest/usage.html
