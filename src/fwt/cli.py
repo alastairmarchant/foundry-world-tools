@@ -1,9 +1,9 @@
+import logging
+from typing import Optional
+
 import click
 
-from . import lib
-
-
-logging = lib.logging
+from fwt import lib
 
 
 @click.group(invoke_without_command=True)
@@ -34,12 +34,22 @@ logging = lib.logging
     ),
 )
 @click.pass_context
-def cli(ctx, loglevel, logfile, datadir, showpresets, preset, config, edit, mkconfig):
+def cli(
+    ctx: click.Context,
+    loglevel: Optional[str],
+    logfile: Optional[str],
+    datadir: Optional[str],
+    showpresets: bool,
+    preset: Optional[str],
+    config: Optional[str],
+    edit: bool,
+    mkconfig: bool,
+):
     """Commands for managing asset files in foundry worlds"""
     ctx.ensure_object(dict)
     if logfile:
         logging.basicConfig(filename=logfile, level=logging.DEBUG)
-    if not loglevel.lower() == "quiet":
+    if loglevel.lower() != "quiet":
         loglevel = loglevel.upper()
         level_check = loglevel in lib.LOG_LEVELS
         if not level_check:
@@ -56,8 +66,8 @@ def cli(ctx, loglevel, logfile, datadir, showpresets, preset, config, edit, mkco
     logging.debug(f"started cli with options {lib.json.dumps(ctx.params)}")
     if config:
         config_file = lib.Path(config)
-    elif not config:
-        config_dir = click.get_app_dir("foundryWorldTools")
+    else:
+        config_dir = click.get_app_dir("fwt")
         config_file = lib.Path(config_dir) / "config.json"
     if edit:
         click.echo(f"Opening file {config_file} for editing")
@@ -92,7 +102,7 @@ def cli(ctx, loglevel, logfile, datadir, showpresets, preset, config, edit, mkco
                 f"Preset not found. Presets avaliable are: "
                 f" {', '.join(presets.keys())}"
             )
-        if not ctx.invoked_subcommand in preset_obj["command"]:
+        if ctx.invoked_subcommand not in preset_obj["command"]:
             ctx.fail(
                 f"Preset {preset} is not a valid preset for the"
                 f" {ctx.invoked_subcommand} command"
