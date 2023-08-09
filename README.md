@@ -45,9 +45,9 @@ Install using pip `python3 -m pip install git+https://github.com/nathan-sain/fou
 
 On windows the cli command isn't installed in a directory that is in the binary path. In this case you have three options:
 
-1. use `python3 -m foundryWorldTools` instead of `fwt` to execute the cli
+1. use `python3 -m fwt` instead of `fwt` to execute the cli
 2. find the fwt cli command and put it in your path. It's usually in an AppData/Local/Packages/Python3X/Scripts
-3. create a PowerShell function to run the python module with the fwt command `Function fwt {python3 -m foundryWorldTools @Args}`
+3. create a PowerShell function to run the python module with the fwt command `Function fwt {python3 -m fwt @Args}`
 
 # Notes
 
@@ -207,7 +207,7 @@ With git configured to use nedb2yaml as a textconv filter it is possible to view
 
 ```
 [diff "nedb"]
-        textconv = python3 -m foundryWorldTools.nedb2yaml
+        textconv = python3 -m fwt.nedb2yaml
         cachetextconv = true
 ```
 
@@ -231,11 +231,11 @@ It is also possible to convert nedb files to yaml with nedb2yaml make edits and 
 
 Create a YAML version of a Foundry db
 
-    python3 -m foundryWorldTools.nedb2yaml data/actors.db > actors.yaml
+    python3 -m fwt.nedb2yaml data/actors.db > actors.yaml
 
 Create a Foundry db from a YAML file
 
-    python3 -m foundryWorldTools.yaml2nedb actors.yaml > actors.db
+    python3 -m fwt.yaml2nedb actors.yaml > actors.db
 
 ## Contributing
 
