@@ -1,4 +1,3 @@
-import errno
 import filecmp
 import json
 import logging
@@ -6,27 +5,20 @@ import os
 import random
 import re
 import shutil
-import stat
 import string
-import sys
 import urllib.parse
 import urllib.request
 from collections import UserDict
 from contextlib import AbstractContextManager
-from itertools import chain
-from itertools import tee
-from pathlib import Path
-from pathlib import Path as _Path_
-from pathlib import _posix_flavour
-from pathlib import _windows_flavour
-from tempfile import gettempdir
+from itertools import chain, tee
+from pathlib import Path, _posix_flavour, _windows_flavour
 from types import SimpleNamespace
 
 import jsonlines
 
 
 __version__ = "0.4.8"
-LOG_LEVELS = ["ERROR", "INFO", "WARNING", "DEBUG"]
+LOG_LEVELS = ["QUIET", "ERROR", "WARNING", "INFO", "DEBUG"]
 
 
 def find_list_dups(c):
@@ -114,14 +106,14 @@ def resolve_fvtt_path(
     """
     if not fwtpath.is_absolute():
         cwd = os.environ.get("PWD", os.getcwd())
-        temp_path = get_relative_to(_Path_(cwd), path)
+        temp_path = get_relative_to(Path(cwd), path)
         path = temp_path.as_posix()
         reinit_fwtpath(fwtpath, temp_path)
         logging.debug(f"Detected relative path. Translated to {path}")
     if foundry_user_dir:
-        fwtpath._fwt_fud = _Path_(foundry_user_dir)
+        fwtpath._fwt_fud = Path(foundry_user_dir)
     elif fwtpath.foundry_user_dir:
-        fwtpath._fwt_fud = _Path_(fwtpath.foundry_user_dir)
+        fwtpath._fwt_fud = Path(fwtpath.foundry_user_dir)
     else:
         fwtpath._fwt_fud = find_foundry_user_dir(path)
     if not fwtpath._fwt_fud or not fwtpath._fwt_fud.exists():
@@ -147,11 +139,11 @@ def resolve_fvtt_path(
             if not manafest.parent.name == fwtpath.project_name:
                 logging.warning("project directory and name are different")
             if symlink:
-                fwtpath._fwt_rpd = _Path_(
+                fwtpath._fwt_rpd = Path(
                     f"{fwtpath.project_type}s/{fwtpath.project_name}"
                 )
                 if fwtpath != manafest.parent:
-                    fwtpath._fwt_rtp = _Path_(
+                    fwtpath._fwt_rtp = Path(
                         fwtpath._fwt_rpd / fwtpath.relative_to(manafest.parent)
                     )
                 else:
@@ -267,7 +259,7 @@ class FWTFileManager:
         )
         self.project_dir = FWTPath(project_dir, require_project=True).to_fpd()
         if trash_dir:
-            if not _Path_(trash_dir).is_absolute():
+            if not Path(trash_dir).is_absolute():
                 trash_dir = self.project_dir / trash_dir
             self.trash_dir = find_next_avaliable_path(trash_dir / "session.0")
             self.trash_dir.mkdir(parents=True, exist_ok=True)
@@ -564,7 +556,7 @@ class FWTSetManager(FWTFileManager):
         self.rewrite_queue = rewrite_queue
 
 
-class FWTPath(_Path_):
+class FWTPath(Path):
     """
     interface for representing paths in foundry assets.
     provides checks to ensure files are within foundry user data directory.
@@ -1009,7 +1001,7 @@ class FWTFileWriter(AbstractContextManager):
         if trash_overwrite != None:
             self._trash_overwrite = trash_overwrite
         if trash_dir != None:
-            self._trash_dir = _Path_(trash_dir)
+            self._trash_dir = Path(trash_dir)
             self._trash_dir.parent.mkdir(parents=True, exist_ok=True)
         if dest_path:
             self._dest_path = Path(dest_path)
