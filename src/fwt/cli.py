@@ -7,10 +7,15 @@ from fwt import lib
 
 
 @click.group(invoke_without_command=True)
-@click.option("--loglevel", default="ERROR", help="Log level for console output")
+@click.option(
+    "--loglevel",
+    type=click.Choice(lib.LOG_LEVELS, case_sensitive=False),
+    default="ERROR",
+    help="Log level for console output",
+)
 @click.option(
     "--logfile",
-    help="log DEBUG messages to file",
+    help="Output log messages to a file",
     type=click.Path(exists=False, file_okay=True, resolve_path=True),
 )
 @click.option("--config", help="specify a config file to load", type=click.Path())
@@ -36,7 +41,7 @@ from fwt import lib
 @click.pass_context
 def cli(
     ctx: click.Context,
-    loglevel: Optional[str],
+    loglevel: str,
     logfile: Optional[str],
     datadir: Optional[str],
     showpresets: bool,
@@ -45,17 +50,11 @@ def cli(
     edit: bool,
     mkconfig: bool,
 ):
-    """Commands for managing asset files in foundry worlds"""
+    """Commands for managing asset files in foundry worlds."""
     ctx.ensure_object(dict)
     if logfile:
         logging.basicConfig(filename=logfile, level=logging.DEBUG)
-    if loglevel.lower() != "quiet":
-        loglevel = loglevel.upper()
-        level_check = loglevel in lib.LOG_LEVELS
-        if not level_check:
-            ctx.fail(
-                f"loglevel {loglevel} must be one of " f"{lib.LOG_LEVELS+['QUIET']}"
-            )
+    if loglevel != "QUIET":
         loglevel = getattr(lib.logging, loglevel)
         if logfile:
             consoleHandler = logging.StreamHandler()
@@ -152,6 +151,7 @@ def cli(
     "--exclude-dir",
     multiple=True,
     help="Directory name or path to exclude. May be used multiple times.",
+    type=click.Path(exists=True, file_okay=False),
 )
 @click.argument("dir", type=click.Path(exists=True, file_okay=False))
 @click.pass_context
@@ -277,11 +277,22 @@ def rename(ctx, src, target, keep_src):
 
 @cli.command()
 @click.pass_context
-@click.argument("dir", type=click.Path(exists=True))
-@click.option("--type", help="Database type. Currently supports actors and items")
-@click.option("--asset-dir", help="Directory in the world root to store images")
-def download(ctx, dir, type, asset_dir):
-    """Download linked assets to the project directory"""
+@click.argument(
+    "dir",
+    type=click.Path(exists=True, file_okay=False),
+)
+@click.option(
+    "--type",
+    type=click.Choice(["actors", "items"], case_sensitive=False),
+    help="Database type. Currently supports actors and items",
+)
+@click.option(
+    "--asset-dir",
+    type=click.Path(exists=False, file_okay=False),
+    help="Directory in the world root to store images",
+)
+def download(ctx, dir: str, type: str, asset_dir: str):
+    """Download linked assets to the project directory."""
     logging.debug(f"download started with options {lib.json.dumps(ctx.params)}")
     if not type:
         ctx.fail("Missing required option --type")
