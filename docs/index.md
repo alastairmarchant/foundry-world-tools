@@ -4,6 +4,7 @@ end-before: <!-- github-only -->
 ---
 ```
 
+[config]: config
 [license]: license
 [contributor guide]: contributing
 [command-line reference]: usage
@@ -16,6 +17,7 @@ maxdepth: 1
 
 usage
 reference
+config
 contributing
 Code of Conduct <codeofconduct>
 License <license>

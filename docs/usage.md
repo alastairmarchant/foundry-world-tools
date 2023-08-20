@@ -1,7 +1,7 @@
 # Usage
 
 ```{eval-rst}
-.. click:: fwt.__main__:main
-    :prog: foundry-world-tools
+.. click:: fwt.__main__:cli
+    :prog: fwt
     :nested: full
 ```
