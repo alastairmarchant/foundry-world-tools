@@ -24,30 +24,69 @@ click = ">=8.0.1"
 jsonlines = ">=3.1.0"
 pyyaml = ">=6.0.1"
 
-[tool.poetry.dev-dependencies]
-Pygments = ">=2.10.0"
+[tool.poetry.group.pre-commit]
+optional = true
+
+[tool.poetry.group.pre-commit.dependencies]
 black = ">=21.10b0"
-coverage = {extras = ["toml"], version = ">=6.2"}
 darglint = ">=1.8.1"
 flake8 = ">=4.0.1"
 flake8-bandit = ">=2.1.2"
 flake8-bugbear = ">=21.9.2"
 flake8-docstrings = ">=1.6.0"
 flake8-rst-docstrings = ">=0.2.5"
-furo = ">=2021.11.12"
 isort = ">=5.10.1"
-mypy = ">=0.930"
 pep8-naming = ">=0.12.1"
 pre-commit = ">=2.16.0"
 pre-commit-hooks = ">=4.1.0"
-pytest = ">=6.2.5"
 pyupgrade = ">=2.29.1"
+
+[tool.poetry.group.safety]
+optional = true
+
+[tool.poetry.group.safety.dependencies]
 safety = ">=1.10.3"
+
+[tool.poetry.group.coverage]
+optional = true
+
+[tool.poetry.group.coverage.dependencies]
+coverage = {extras = ["toml"], version = ">=6.2"}
+
+[tool.poetry.group.tests]
+optional = true
+
+[tool.poetry.group.tests.dependencies]
+Pygments = ">=2.10.0"
+pytest = ">=6.2.5"
+
+[tool.poetry.group.mypy]
+optional = true
+
+[tool.poetry.group.mypy.dependencies]
+mypy = ">=0.930"
+types-pyyaml = "^6.0.12.11"
+
+[tool.poetry.group.typeguard]
+optional = true
+
+[tool.poetry.group.typeguard.dependencies]
+typeguard = ">=2.13.3"
+
+[tool.poetry.group.xdoctest]
+optional = true
+
+[tool.poetry.group.xdoctest.dependencies]
+xdoctest = {extras = ["colors"], version = ">=0.15.10"}
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+furo = ">=2021.11.12"
 sphinx = ">=4.3.2"
 sphinx-autobuild = ">=2021.3.14"
 sphinx-click = ">=3.0.2"
-typeguard = ">=2.13.3"
-xdoctest = {extras = ["colors"], version = ">=0.15.10"}
 myst-parser = {version = ">=0.16.1"}
 
 [tool.poetry.scripts]
@@ -74,7 +113,7 @@ strict = true
 warn_unreachable = true
 pretty = true
 show_column_numbers = true
-show_error_codes = true
+hide_error_codes = false
 show_error_context = true
 
 [build-system]
