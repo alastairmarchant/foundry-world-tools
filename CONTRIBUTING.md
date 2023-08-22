@@ -41,7 +41,6 @@ You need Python 3.8+ and the following tools:
 
 - [Poetry]
 - [Nox]
-- [nox-poetry]
 
 Install the package with development requirements:
 
@@ -59,7 +58,6 @@ $ poetry run foundry-world-tools
 
 [poetry]: https://python-poetry.org/
 [nox]: https://nox.thea.codes/
-[nox-poetry]: https://nox-poetry.readthedocs.io/
 
 ## How to test the project
 
