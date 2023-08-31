@@ -1,15 +1,28 @@
+"""CLI logic for FWT."""
+import json
 import logging
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Tuple
 
 import click
 
-from fwt import lib
+from fwt._logging import LOG_LEVELS, setup_logging
+from fwt.exceptions import FWTConfigNoDataDirError, FWTFileError
+from fwt.lib import (
+    FWTAssetDownloader,
+    FWTConfig,
+    FWTFileManager,
+    FWTNeDB,
+    FWTPath,
+    FWTProjectDb,
+    FWTSetManager,
+)
 
 
 @click.group(invoke_without_command=True)
 @click.option(
     "--loglevel",
-    type=click.Choice(lib.LOG_LEVELS, case_sensitive=False),
+    type=click.Choice(LOG_LEVELS, case_sensitive=False),
     default="ERROR",
     help="Log level for console output",
 )
@@ -39,7 +52,7 @@ from fwt import lib
     ),
 )
 @click.pass_context
-def cli(
+def main(
     ctx: click.Context,
     loglevel: str,
     logfile: Optional[str],
@@ -49,58 +62,45 @@ def cli(
     config: Optional[str],
     edit: bool,
     mkconfig: bool,
-):
+) -> None:
     """Commands for managing asset files in foundry worlds."""
     ctx.ensure_object(dict)
-    if logfile:
-        logging.basicConfig(filename=logfile, level=logging.DEBUG)
-    if loglevel != "QUIET":
-        loglevel = getattr(lib.logging, loglevel)
-        if logfile:
-            consoleHandler = logging.StreamHandler()
-            consoleHandler.setLevel(loglevel)
-            logging.getLogger("").addHandler(consoleHandler)
-        else:
-            logging.basicConfig(level=loglevel)
-    logging.debug(f"started cli with options {lib.json.dumps(ctx.params)}")
+    setup_logging(loglevel, logfile)
+    logging.debug("Started cli with options %s", json.dumps(ctx.params))
     if config:
-        config_file = lib.Path(config)
+        config_file = Path(config)
     else:
         config_dir = click.get_app_dir("fwt")
-        config_file = lib.Path(config_dir) / "config.json"
+        config_file = Path(config_dir) / "config.json"
     if edit:
         click.echo(f"Opening file {config_file} for editing")
-        click.edit(filename=config_file)
+        click.edit(filename=str(config_file))
         ctx.exit()
-    logging.info(f"Attempting to load config from {config_file}")
+    logging.info("Attempting to load config from %s", config_file)
     try:
-        config_data = lib.FWTConfig(config_file, mkconfig=mkconfig, dataDir=datadir)
-    except lib.FWTConfigNoDataDir:
+        ctx.obj["CONFIG"] = FWTConfig(config_file, mkconfig=mkconfig, dataDir=datadir)
+    except FWTConfigNoDataDirError:
         ctx.fail(
             "Foundry dataDir not specified and unable to "
             "automatically determine the location. Set --dataDir"
             " or add dataDir to your config file"
         )
-    except lib.FWTFileError:
+    except FWTFileError:
         if config:
             ctx.fail("Config file not found. Use --mkconfig to create it")
-        config_data = {}
-    if config_data.get("error", False):
-        ctx.fail(f'Error loading config: {config_data["error"]}')
-    ctx.obj["CONFIG"] = config_data
-    ctx.obj["CONFIG_LOADED"] = True
+    if ctx.obj.get("CONFIG", {}).get("error", False):
+        ctx.fail(f'Error loading config: {ctx.obj["CONFIG"]["error"]}')
     if preset:
-        if ctx.obj["CONFIG_LOADED"]:
-            presets = ctx.obj["CONFIG"].get("presets", {})
-        try:
-            preset_obj = presets[preset]
-        except NameError:
+        presets = ctx.obj.get("CONFIG", {}).get("presets", {})
+
+        if not presets:
             ctx.fail("Preset not found: There are no presets defined")
-        except KeyError:
+        elif preset not in presets:
             ctx.fail(
                 f"Preset not found. Presets avaliable are: "
                 f" {', '.join(presets.keys())}"
             )
+        preset_obj = presets[preset]
         if ctx.invoked_subcommand not in preset_obj["command"]:
             ctx.fail(
                 f"Preset {preset} is not a valid preset for the"
@@ -108,9 +108,8 @@ def cli(
             )
         ctx.obj["PRESET"] = preset_obj
     elif showpresets:
-        if ctx.obj["CONFIG_LOADED"]:
-            presets = ctx.obj["CONFIG"].get("presets", {})
-        try:
+        presets = ctx.obj.get("CONFIG", {}).get("presets", {})
+        if presets:
             click.echo(
                 "\nPresets:\n"
                 + "\n".join(
@@ -120,7 +119,7 @@ def cli(
                     ]
                 )
             )
-        except NameError:
+        else:
             ctx.fail("There are no presets defined")
     elif mkconfig:
         ctx.exit()
@@ -128,9 +127,11 @@ def cli(
         click.echo(ctx.get_help())
 
 
-@cli.command()
+@main.command()
 @click.option(
-    "--ext", multiple=True, help="file extension filter. May be used multiple times."
+    "--ext",
+    multiple=True,
+    help="file extension filter. May be used multiple times.",
 )
 @click.option(
     "--preferred",
@@ -142,10 +143,16 @@ def cli(
     ),
 )
 @click.option(
-    "--byname", is_flag=True, default=False, help="method for finding duplicates"
+    "--byname",
+    is_flag=True,
+    default=False,
+    help="method for finding duplicates",
 )
 @click.option(
-    "--bycontent", is_flag=True, default=False, help="method for finding duplicates"
+    "--bycontent",
+    is_flag=True,
+    default=False,
+    help="method for finding duplicates",
 )
 @click.option(
     "--exclude-dir",
@@ -153,15 +160,28 @@ def cli(
     help="Directory name or path to exclude. May be used multiple times.",
     type=click.Path(exists=True, file_okay=False),
 )
-@click.argument("dir", type=click.Path(exists=True, file_okay=False))
+@click.argument(
+    "dir_",
+    metavar="DIR",
+    type=click.Path(exists=True, file_okay=False),
+)
 @click.pass_context
-def dedup(ctx, dir, ext, preferred, byname, bycontent, exclude_dir):
+def dedup(
+    ctx: click.Context,
+    dir_: str,
+    ext: Tuple[str, ...],
+    preferred: Tuple[str, ...],
+    byname: bool,
+    bycontent: bool,
+    exclude_dir: Tuple[str, ...],
+) -> None:
     """Scans for duplicate files, removes duplicates and updates fvtt's databases.
 
-    DIR should be a directory containing a world.json file"""
-    logging.debug(f"dedup started with options {lib.json.dumps(ctx.params)}")
-    dir = lib.FWTPath(dir)
-    dup_manager = lib.FWTSetManager(dir)
+    DIR should be a directory containing a world.json file.
+    """
+    logging.debug("dedup started with options %s", json.dumps(ctx.params))
+    dedup_dir = FWTPath(dir_)
+    dup_manager = FWTSetManager(dedup_dir)
     preset = ctx.obj.get("PRESET", None)
     if preset:
         preferred += tuple(preset.get("preferred", []))
@@ -169,8 +189,8 @@ def dedup(ctx, dir, ext, preferred, byname, bycontent, exclude_dir):
         bycontent = preset.get("bycontent", bycontent)
         ext += tuple(preset.get("ext", []))
         exclude_dir += tuple(preset.get("exclude-dir", []))
-    for dir in exclude_dir:
-        dup_manager.add_exclude_dir(dir)
+    for ex_dir in exclude_dir:
+        dup_manager.add_exclude_dir(ex_dir)
     no_method = not byname and not bycontent
     both_methods = byname and bycontent
     if no_method or both_methods:
@@ -192,9 +212,11 @@ def dedup(ctx, dir, ext, preferred, byname, bycontent, exclude_dir):
     dup_manager.process_rewrite_queue()
 
 
-@cli.command()
+@main.command()
 @click.option(
-    "--ext", multiple=True, help="file extension filter. May be used multiple times."
+    "--ext",
+    multiple=True,
+    help="file extension filter. May be used multiple times.",
 )
 @click.option(
     "--remove",
@@ -209,15 +231,25 @@ def dedup(ctx, dir, ext, preferred, byname, bycontent, exclude_dir):
 @click.option(
     "--lower", is_flag=True, default=False, help="convert file names to lower case"
 )
-@click.argument("dir", type=click.Path(exists=True, file_okay=False))
+@click.argument(
+    "input_dir", metavar="DIR", type=click.Path(exists=True, file_okay=False)
+)
 @click.pass_context
-def renameall(ctx, dir, ext, remove, replace, lower):
+def renameall(
+    ctx: click.Context,
+    input_dir: str,
+    ext: Tuple[str, ...],
+    remove: Tuple[str, ...],
+    replace: Tuple[str, ...],
+    lower: bool,
+) -> None:
     """Scans files, renames based on a pattern and updates the world databases.
 
-    DIR should be a directory containing a world.json file"""
-    logging.debug(f"renameall started with options {lib.json.dumps(ctx.params)}")
-    dir = lib.FWTPath(dir)
-    file_manager = lib.FWTFileManager(dir)
+    DIR should be a directory containing a world.json file.
+    """
+    logging.debug("renameall started with options %s", json.dumps(ctx.params))
+    project_dir = FWTPath(input_dir)
+    file_manager = FWTFileManager(project_dir)
     preset = ctx.obj.get("PRESET", None)
     if preset:
         ext += tuple(preset.get("ext", ()))
@@ -237,37 +269,37 @@ def renameall(ctx, dir, ext, remove, replace, lower):
     file_manager.process_rewrite_queue()
 
 
-@cli.command()
+@main.command()
 @click.argument("src", type=click.Path(exists=True, file_okay=True, resolve_path=True))
 @click.argument("target", type=click.Path(exists=False))
 @click.option("--keep-src", is_flag=True, default=False, help="keep source file")
 @click.pass_context
-def rename(ctx, src, target, keep_src):
-    """Rename a file and update the project databases"""
-    logging.debug(f"rename started with options {lib.json.dumps(ctx.params)}")
-    src = lib.FWTPath(src)
-    target = lib.FWTPath(target, exists=False)
+def rename(ctx: click.Context, src: str, target: str, keep_src: bool) -> None:
+    """Rename a file and update the project databases."""
+    logging.debug("rename started with options %s", json.dumps(ctx.params))
+    src_path = FWTPath(src)
+    target_path = FWTPath(target, exists=False)
 
-    if src.is_project and target.is_project:
-        same_project = src.as_rpd() == target.as_rpd()
+    if src_path.is_project and target_path.is_project:
+        same_project = src_path.as_rpd() == target_path.as_rpd()
         if not same_project and not keep_src:
             ctx.fail(
-                "file rename with src and target being different projects."
-                f" different projects are only supported with --keep-src"
+                "File rename with src and target being different projects."
+                " different projects are only supported with --keep-src"
             )
 
-    if src.is_project_dir():
-        fm = lib.FWTFileManager(src.to_fpd())
-        fm.rename_world(target, keep_src)
+    if src_path.is_project_dir():
+        fm = FWTFileManager(src_path.to_fpd())
+        fm.rename_world(target_path, keep_src)
     else:
-        if src.is_project:
-            fm = lib.FWTFileManager(src.to_fpd())
-        elif target.is_project:
-            fm = lib.FWTFileManager(target.to_fpd())
+        if src_path.is_project:
+            fm = FWTFileManager(src_path.to_fpd())
+        elif target_path.is_project:
+            fm = FWTFileManager(target_path.to_fpd())
         else:
             ctx.fail("No project directory found!")
-        src_fwtfile = fm.add_file(src)
-        src_fwtfile.new_path = target
+        src_fwtfile = fm.add_file(src_path)
+        src_fwtfile.new_path = target_path
         if keep_src:
             src_fwtfile.keep_src = True
         fm.generate_rewrite_queue()
@@ -275,37 +307,39 @@ def rename(ctx, src, target, keep_src):
         fm.process_rewrite_queue()
 
 
-@cli.command()
+@main.command()
 @click.pass_context
 @click.argument(
-    "dir",
+    "input_dir",
+    metavar="DIR",
     type=click.Path(exists=True, file_okay=False),
 )
 @click.option(
     "--type",
+    "input_type",
     type=click.Choice(["actors", "items"], case_sensitive=False),
     help="Database type. Currently supports actors and items",
+    required=True,
 )
 @click.option(
     "--asset-dir",
     type=click.Path(exists=False, file_okay=False),
     help="Directory in the world root to store images",
+    required=True,
 )
-def download(ctx, dir: str, type: str, asset_dir: str):
+def download(
+    ctx: click.Context, input_dir: str, input_type: str, asset_dir: str
+) -> None:
     """Download linked assets to the project directory."""
-    logging.debug(f"download started with options {lib.json.dumps(ctx.params)}")
-    if not type:
-        ctx.fail("Missing required option --type")
-    if not asset_dir:
-        ctx.fail("Missing required option --asset-dir")
-    project_dir = lib.FWTPath(dir, require_project=True)
-    dbs = lib.FWTProjectDb(project_dir, driver=lib.FWTNeDB)
-    downloader = lib.FWTAssetDownloader(project_dir)
-    if type == "actors":
+    logging.debug("Download started with options %s", json.dumps(ctx.params))
+    project_dir = FWTPath(input_dir, require_project=True)
+    dbs = FWTProjectDb(project_dir, driver=FWTNeDB)
+    downloader = FWTAssetDownloader(project_dir)
+    if input_type == "actors":
         for actor in dbs.data.actors:
             downloader.download_actor_images(actor, asset_dir)
         dbs.data.actors.save()
-    elif type == "items":
+    elif input_type == "items":
         for item in dbs.data.items:
             downloader.download_item_images(item, asset_dir)
         dbs.data.items.save()
@@ -313,30 +347,27 @@ def download(ctx, dir: str, type: str, asset_dir: str):
         ctx.fail("--type only allows 'actors' or 'items'")
 
 
-@cli.command()
+@main.command()
 @click.pass_context
-@click.option("--from", "_from", type=click.Path(exists=True))
-@click.option("--to", type=click.Path(exists=True))
-def pull(ctx, _from, to):
-    logging.debug(f"pull command started with options {lib.json.dumps(ctx.params)}")
-    """Pull assets from external projects"""
-    if not _from:
-        ctx.fail("Missing required option --from")
-    if not to:
-        ctx.fail("Missing required option --to")
-    fm = lib.FWTFileManager(to)
+@click.option("--from", "_from", type=click.Path(exists=True), required=True)
+@click.option("--to", type=click.Path(exists=True), required=True)
+def pull(ctx: click.Context, _from: str, to: str) -> None:
+    """Pull assets from external projects."""
+    logging.debug("pull command started with options %s", json.dumps(ctx.params))
+    fm = FWTFileManager(to)
     fm.find_remote_assets(_from)
     fm.generate_rewrite_queue()
     fm.process_file_queue()
     fm.process_rewrite_queue()
 
 
-@cli.command()
+@main.command()
 @click.pass_context
-@click.argument("dir", type=click.Path(exists=True))
-def info(ctx, dir):
-    logging.debug(f"info command started with options {lib.json.dumps(ctx.params)}")
-    project = lib.FWTPath(dir)
+@click.argument("input_dir", metavar="DIR", type=click.Path(exists=True))
+def info(ctx: click.Context, input_dir: str) -> None:
+    """Provides basic information about a Foundry project."""
+    logging.debug("info command started with options %s", json.dumps(ctx.params))
+    project = FWTPath(input_dir)
     o = []
     o.append(f"Project: {'yes' if project.is_project else 'no'}")
     if project.is_project:
