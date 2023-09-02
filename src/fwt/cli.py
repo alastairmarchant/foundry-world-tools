@@ -196,12 +196,13 @@ def dedup(
     if no_method or both_methods:
         ctx.fail(
             "one of --bycontent or --byname must be set to preform dedup"
-            f"got byname={byname} and bycontent={bycontent}"
+            f"\ngot byname={byname} and bycontent={bycontent}"
         )
     if bycontent:
         dup_manager.detect_method = "bycontent"
-    elif byname:
+    else:
         dup_manager.detect_method = "byname"
+
     for pp in preferred:
         dup_manager.add_preferred_pattern(pp)
     dup_manager.add_file_extensions(ext)
@@ -339,12 +340,10 @@ def download(
         for actor in dbs.data.actors:
             downloader.download_actor_images(actor, asset_dir)
         dbs.data.actors.save()
-    elif input_type == "items":
+    else:
         for item in dbs.data.items:
             downloader.download_item_images(item, asset_dir)
         dbs.data.items.save()
-    else:
-        ctx.fail("--type only allows 'actors' or 'items'")
 
 
 @main.command()
