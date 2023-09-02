@@ -3,7 +3,6 @@ import os
 import shlex
 import shutil
 import sys
-import tempfile
 from pathlib import Path
 from textwrap import dedent
 from typing import Iterable, Iterator
@@ -55,18 +54,20 @@ def install(
         editable: If the install should be editable,
             useful for live reloading docs.
     """
-    requirements = tempfile.NamedTemporaryFile(dir=".nox")
+    requirements = ".nox/requirements.txt"
+    with open(requirements, "w", encoding="utf-8"):
+        os.utime(requirements, None)
     session.run(
         "poetry",
         "export",
         "--{}={}".format("only" if not root else "with", ",".join(groups)),
         "--format=requirements.txt",
         "--without-hashes",
-        f"--output={requirements.name}",
+        f"--output={requirements}",
         external=True,
     )
-    session.install("-r", requirements.name)
-    requirements.close()
+    session.install("-r", requirements)
+    os.remove(requirements)
     if root:
         if editable:
             session.install("-e", ".")
