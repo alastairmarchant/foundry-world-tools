@@ -55,17 +55,18 @@ def install(
         editable: If the install should be editable,
             useful for live reloading docs.
     """
-    with tempfile.NamedTemporaryFile(dir=".") as requirements:
-        session.run(
-            "poetry",
-            "export",
-            "--{}={}".format("only" if not root else "with", ",".join(groups)),
-            "--format=requirements.txt",
-            "--without-hashes",
-            f"--output={requirements.name}",
-            external=True,
-        )
-        session.install("-r", requirements.name)
+    requirements = tempfile.NamedTemporaryFile(dir=".nox")
+    session.run(
+        "poetry",
+        "export",
+        "--{}={}".format("only" if not root else "with", ",".join(groups)),
+        "--format=requirements.txt",
+        "--without-hashes",
+        f"--output={requirements.name}",
+        external=True,
+    )
+    session.install("-r", requirements.name)
+    requirements.close()
     if root:
         if editable:
             session.install("-e", ".")
