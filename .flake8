@@ -5,7 +5,8 @@ max-line-length = 80
 # Change back to 10 after refactor
 max-complexity = 16
 docstring-convention = google
-per-file-ignores = tests/*:S101
+# Possibly remove D1 for test documentation
+per-file-ignores = tests/*:S101,D1
 rst-roles = class,const,func,meth,mod,ref
 rst-directives = deprecated
 ignore-names=prototypeToken,dataDir,setUp,tearDown,setUpClass,tearDownClass,setUpModule,tearDownModule,asyncSetUp,asyncTearDown,setUpTestData,failureException,longMessage,maxDiff

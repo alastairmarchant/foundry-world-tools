@@ -61,6 +61,7 @@ optional = true
 [tool.poetry.group.tests.dependencies]
 Pygments = ">=2.10.0"
 pytest = ">=6.2.5"
+pytest-mock = "^3.11.1"
 
 [tool.poetry.group.mypy]
 optional = true
@@ -105,6 +106,10 @@ source = ["fwt", "tests"]
 [tool.coverage.report]
 show_missing = true
 fail_under = 100
+exclude_also = [
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:"
+]
 
 [tool.isort]
 profile = "black"
