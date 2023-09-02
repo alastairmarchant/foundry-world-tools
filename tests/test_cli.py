@@ -11,6 +11,10 @@ from fwt import cli as cli
 
 
 PRESETS = {
+    "showinfo": {
+        "command": "info",
+        "description": "Show info for dir",
+    },
     "dedup": {
         "bycontent": True,
         "command": "dedup",
@@ -122,23 +126,24 @@ def test_main_exits_on_config_error(mocker: MockerFixture, runner: CliRunner) ->
 
 def test_main_preset_with_no_presets(mocker: MockerFixture, runner: CliRunner) -> None:
     mocker.patch("fwt.cli.FWTConfig", return_value={"presets": {}})
-    result = runner.invoke(cli.main, args=["--preset", "dedup"])
+    result = runner.invoke(cli.main, args=["--preset", "showinfo"])
 
     assert result.exit_code == 2
 
 
 def test_main_command_not_in_preset(mocker: MockerFixture, runner: CliRunner) -> None:
     mocker.patch(
-        "fwt.cli.FWTConfig", return_value={"presets": {"dedup": {"command": "other"}}}
+        "fwt.cli.FWTConfig",
+        return_value={"presets": {"showinfo": {"command": "other"}}},
     )
-    result = runner.invoke(cli.main, args=["--preset", "dedup", "dedup"])
+    result = runner.invoke(cli.main, args=["--preset", "showinfo", "info"])
 
     assert result.exit_code == 2
 
 
 def test_main_preset_not_in_presets(mocker: MockerFixture, runner: CliRunner) -> None:
     mocker.patch("fwt.cli.FWTConfig", return_value={"presets": {"other": {}}})
-    result = runner.invoke(cli.main, args=["--preset", "dedup"])
+    result = runner.invoke(cli.main, args=["--preset", "showinfo"])
 
     assert result.exit_code == 2
 
@@ -153,7 +158,7 @@ def test_main_with_preset(mocker: MockerFixture, runner: CliRunner) -> None:
     with runner.isolated_filesystem():
         os.mkdir("test_dir")
         result = runner.invoke(
-            cli.main, args=["--preset", "dedup", "dedup", "test_dir"]
+            cli.main, args=["--preset", "showinfo", "info", "test_dir"]
         )
 
     assert result.exit_code == 0
@@ -205,7 +210,19 @@ def test_main_mkconfig_exits(runner: CliRunner) -> None:
     assert result.exit_code == 0
 
 
-def test_main_no_help(mocker: MockerFixture, runner: CliRunner) -> None:
+def test_main_no_help(runner: CliRunner) -> None:
+    with runner.isolated_filesystem():
+        os.mkdir("test_dir")
+        result = runner.invoke(
+            cli.main, args=["--config", "config.json", "info", "test_dir"]
+        )
+
+    print(result.output)
+
+    assert result.exit_code == 0
+
+
+def test_dedup(runner: CliRunner):
     with runner.isolated_filesystem():
         os.mkdir("test_dir")
         result = runner.invoke(
