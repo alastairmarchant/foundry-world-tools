@@ -55,7 +55,7 @@ def install(
         editable: If the install should be editable,
             useful for live reloading docs.
     """
-    with tempfile.NamedTemporaryFile(dir=".nox") as requirements:
+    with tempfile.NamedTemporaryFile(dir=".") as requirements:
         session.run(
             "poetry",
             "export",
