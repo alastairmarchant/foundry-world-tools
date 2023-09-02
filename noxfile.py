@@ -222,9 +222,11 @@ def safety(session: nox.Session) -> None:
 @nox.session(python=python_versions)
 def mypy(session: nox.Session) -> None:
     """Type-check using mypy."""
-    args = session.posargs or ["src", "tests", "docs/conf.py"]
+    args = session.posargs or ["src", "docs/conf.py"]
     install(session, groups=["mypy", "tests"])
     session.run("mypy", *args)
+    if not session.posargs:
+        session.run("mypy", "--implicit-reexport", "tests")
     if not session.posargs:
         session.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
 

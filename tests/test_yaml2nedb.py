@@ -1,3 +1,6 @@
+from typing import cast
+from unittest.mock import Mock
+
 import pytest
 from pytest import CaptureFixture
 from pytest_mock import MockerFixture
@@ -6,7 +9,7 @@ from fwt import yaml2nedb
 
 
 @pytest.fixture(autouse=True)
-def patch_imports(mocker: MockerFixture):
+def patch_imports(mocker: MockerFixture) -> None:
     """Wrap functions to allow testing for calls."""
     mocker.patch("fwt.yaml2nedb.Path", side_effect=mocker.Mock(wraps=yaml2nedb.Path))
     mocker.patch(
@@ -18,7 +21,7 @@ def patch_imports(mocker: MockerFixture):
     )
 
 
-def test_yaml2nedb(mocker: MockerFixture):
+def test_yaml2nedb(mocker: MockerFixture) -> None:
     yaml_str = "\n".join(
         [
             "_id: 1",
@@ -43,9 +46,9 @@ def test_yaml2nedb(mocker: MockerFixture):
 
     yaml2nedb.yaml2nedb("test.yaml")
 
-    yaml2nedb.open.assert_called_once_with("test.yaml")
+    cast(Mock, yaml2nedb.open).assert_called_once_with("test.yaml")  # type: ignore
 
-    yaml2nedb.jsonlines.Writer.assert_called_once_with(
+    cast(Mock, yaml2nedb.jsonlines.Writer).assert_called_once_with(
         yaml2nedb.sys.stdout, compact=True
     )
 
@@ -58,7 +61,7 @@ def test_yaml2nedb(mocker: MockerFixture):
     mock_jsonlines_writer.write_all.assert_called_once_with(expected)
 
 
-def test_show_help(mocker: MockerFixture, capsys: CaptureFixture):
+def test_show_help(mocker: MockerFixture, capsys: CaptureFixture[str]) -> None:
     mocker.patch("fwt.yaml2nedb.sys.argv", new=["/path/to/fwt/yaml2nedb.py"])
     yaml2nedb.show_help()
     captured = capsys.readouterr()

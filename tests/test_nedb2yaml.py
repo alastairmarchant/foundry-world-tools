@@ -1,3 +1,6 @@
+from typing import cast
+from unittest.mock import Mock
+
 import pytest
 from pytest import CaptureFixture
 from pytest_mock import MockerFixture
@@ -6,7 +9,7 @@ from fwt import nedb2yaml
 
 
 @pytest.fixture(autouse=True)
-def patch_imports(mocker: MockerFixture):
+def patch_imports(mocker: MockerFixture) -> None:
     mocker.patch("fwt.nedb2yaml.Path", side_effect=mocker.Mock(wraps=nedb2yaml.Path))
     mocker.patch(
         "fwt.nedb2yaml.jsonlines", side_effect=mocker.Mock(wraps=nedb2yaml.jsonlines)
@@ -16,7 +19,7 @@ def patch_imports(mocker: MockerFixture):
     )
 
 
-def test_nedb2yaml(mocker: MockerFixture):
+def test_nedb2yaml(mocker: MockerFixture) -> None:
     db_lines = [
         {"_id": 1, "name": "Item 1"},
         {"_id": 2, "name": "Item 2"},
@@ -31,10 +34,10 @@ def test_nedb2yaml(mocker: MockerFixture):
 
     result = nedb2yaml.nedb2yaml("test.db")
 
-    nedb2yaml.jsonlines.open.assert_called_once_with("test.db")
+    cast(Mock, nedb2yaml.jsonlines.open).assert_called_once_with("test.db")
 
     for line in db_lines:
-        nedb2yaml.yaml.dump.assert_any_call(line, indent=2)
+        cast(Mock, nedb2yaml.yaml.dump).assert_any_call(line, indent=2)
 
     expected = [
         "_id: 1\nname: Item 1\n",
@@ -45,7 +48,7 @@ def test_nedb2yaml(mocker: MockerFixture):
     assert result == expected
 
 
-def test_show_help(mocker: MockerFixture, capsys: CaptureFixture):
+def test_show_help(mocker: MockerFixture, capsys: CaptureFixture[str]) -> None:
     mocker.patch("fwt.nedb2yaml.sys.argv", new=["/path/to/fwt/nedb2yaml.py"])
     nedb2yaml.show_help()
     captured = capsys.readouterr()

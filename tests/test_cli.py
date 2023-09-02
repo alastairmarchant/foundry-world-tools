@@ -1,11 +1,13 @@
 """Test cases for the __main__ module."""
 import os
+from typing import List, cast
+from unittest.mock import Mock
 
 import pytest
 from click.testing import CliRunner
 from pytest_mock import MockerFixture
 
-from fwt import cli
+from fwt import cli as cli
 
 
 PRESETS = {
@@ -33,7 +35,7 @@ def runner() -> CliRunner:
 
 
 @pytest.fixture(autouse=True)
-def patch_imports(mocker: MockerFixture):
+def patch_imports(mocker: MockerFixture) -> None:
     mocker.patch("fwt.cli.click.echo")
     mocker.patch("fwt.cli.click.edit")
     mocker.patch("fwt.cli.click.get_app_dir", return_value="~/.config/fwt")
@@ -65,15 +67,15 @@ def test_main_succeeds(runner: CliRunner) -> None:
         [],
     ],
 )
-def test_main_gets_config(runner: CliRunner, args) -> None:
+def test_main_gets_config(runner: CliRunner, args: List[str]) -> None:
     result = runner.invoke(cli.main, args=args)
 
     if args:
-        cli.Path.assert_called_once_with(args[1])
-        cli.click.get_app_dir.assert_not_called()
+        cast(Mock, cli.Path).assert_called_once_with(args[1])
+        cast(Mock, cli.click.get_app_dir).assert_not_called()
     else:
-        cli.click.get_app_dir.assert_called_once_with("fwt")
-        cli.Path.assert_called_once_with("~/.config/fwt")
+        cast(Mock, cli.click.get_app_dir).assert_called_once_with("fwt")
+        cast(Mock, cli.Path).assert_called_once_with("~/.config/fwt")
 
     assert result.exit_code == 0
 
@@ -81,7 +83,7 @@ def test_main_gets_config(runner: CliRunner, args) -> None:
 def test_main_edit_config(runner: CliRunner) -> None:
     result = runner.invoke(cli.main, args=["--config", "./config.json", "--edit"])
 
-    cli.click.edit.assert_called_once_with(filename="config.json")
+    cast(Mock, cli.click.edit).assert_called_once_with(filename="config.json")
 
     assert result.exit_code == 0
 
@@ -168,7 +170,7 @@ def test_main_show_presets_fail(mocker: MockerFixture, runner: CliRunner) -> Non
         os.mkdir("test_dir")
         result = runner.invoke(cli.main, args=["--showpresets"])
 
-    cli.click.echo.assert_not_called()
+    cast(Mock, cli.click.echo).assert_not_called()
 
     assert result.exit_code == 2
 
@@ -184,7 +186,7 @@ def test_main_show_presets(mocker: MockerFixture, runner: CliRunner) -> None:
         os.mkdir("test_dir")
         result = runner.invoke(cli.main, args=["--showpresets"])
 
-    cli.click.echo.assert_called_once_with(
+    cast(Mock, cli.click.echo).assert_called_once_with(
         "\nPresets:\n"
         + "\n".join(
             [
