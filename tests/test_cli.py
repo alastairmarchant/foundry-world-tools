@@ -192,7 +192,7 @@ def test_main_with_preset(mocker: MockerFixture, runner: CliRunner) -> None:
             "presets": PRESETS,
         },
     )
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         os.mkdir("test_dir")
         result = runner.invoke(
             cli.main, args=["--preset", "showinfo", "info", "test_dir"]
@@ -208,7 +208,7 @@ def test_main_show_presets_fail(mocker: MockerFixture, runner: CliRunner) -> Non
             "presets": {},
         },
     )
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         os.mkdir("test_dir")
         result = runner.invoke(cli.main, args=["--showpresets"])
 
@@ -224,7 +224,7 @@ def test_main_show_presets(mocker: MockerFixture, runner: CliRunner) -> None:
             "presets": PRESETS,
         },
     )
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         os.mkdir("test_dir")
         result = runner.invoke(cli.main, args=["--showpresets"])
 
@@ -249,7 +249,7 @@ def test_main_mkconfig_exits(runner: CliRunner) -> None:
 
 
 def test_main_no_help(runner: CliRunner) -> None:
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         os.mkdir("test_dir")
         result = runner.invoke(
             cli.main, args=["--config", "config.json", "info", "test_dir"]
@@ -260,7 +260,7 @@ def test_main_no_help(runner: CliRunner) -> None:
 
 @pytest.mark.parametrize("by", ["name", "content"])
 def test_dedup(runner: CliRunner, by: str) -> None:
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         os.mkdir("test_dir")
         os.mkdir("test_exc")
         result = runner.invoke(
@@ -287,7 +287,7 @@ def test_dedup(runner: CliRunner, by: str) -> None:
 
 
 def test_dedup_with_preset(runner: CliRunner) -> None:
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         os.mkdir("test_dir")
         result = runner.invoke(
             cli.main, args=["--preset", "dedupimg", "dedup", "test_dir"]
@@ -315,7 +315,7 @@ def test_dedup_with_preset(runner: CliRunner) -> None:
 
 
 def test_dedup_no_method(runner: CliRunner) -> None:
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         os.mkdir("test_dir")
         result = runner.invoke(cli.main, args=["dedup", "test_dir"])
 
@@ -336,7 +336,7 @@ def test_dedup_no_method(runner: CliRunner) -> None:
 
 
 def test_dedup_both_methods(runner: CliRunner) -> None:
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         os.mkdir("test_dir")
         result = runner.invoke(
             cli.main, args=["dedup", "test_dir", "--bycontent", "--byname"]
@@ -359,7 +359,7 @@ def test_dedup_both_methods(runner: CliRunner) -> None:
 
 
 def test_renameall(runner: CliRunner) -> None:
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         os.mkdir("test_dir")
         result = runner.invoke(
             cli.main,
@@ -383,7 +383,7 @@ def test_renameall(runner: CliRunner) -> None:
 
 
 def test_renameall_with_preset(runner: CliRunner) -> None:
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         os.mkdir("test_dir")
         result = runner.invoke(
             cli.main, args=["--preset", "fixnames", "renameall", "test_dir"]
@@ -412,7 +412,7 @@ def test_renameall_with_preset(runner: CliRunner) -> None:
 
 
 def test_renameall_no_options(runner: CliRunner) -> None:
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         os.mkdir("test_dir")
         result = runner.invoke(cli.main, args=["renameall", "test_dir"])
 
@@ -451,7 +451,7 @@ def test_rename(runner: CliRunner, mocker: MockerFixture, keep_src: bool) -> Non
         )
 
     mocker.patch("fwt.cli.FWTPath", side_effect=mock_fwt_path)
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         test_path = cli.Path(test_file).absolute()
         test_path.parent.mkdir(parents=True)
         test_path.touch()
@@ -497,7 +497,7 @@ def test_rename_src_is_project(runner: CliRunner, mocker: MockerFixture) -> None
         )
 
     mocker.patch("fwt.cli.FWTPath", side_effect=mock_fwt_path)
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         test_path = cli.Path(test_file).absolute()
         test_path.parent.mkdir(parents=True)
         test_path.touch()
@@ -540,7 +540,7 @@ def test_rename_target_is_project(runner: CliRunner, mocker: MockerFixture) -> N
         )
 
     mocker.patch("fwt.cli.FWTPath", side_effect=mock_fwt_path)
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         test_path = cli.Path(test_file).absolute()
         test_path.parent.mkdir(parents=True)
         test_path.touch()
@@ -583,7 +583,7 @@ def test_rename_no_project(runner: CliRunner, mocker: MockerFixture) -> None:
         )
 
     mocker.patch("fwt.cli.FWTPath", side_effect=mock_fwt_path)
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         test_path = cli.Path(test_file).absolute()
         test_path.parent.mkdir(parents=True)
         test_path.touch()
@@ -621,7 +621,7 @@ def test_rename_different_projects(runner: CliRunner, mocker: MockerFixture) -> 
         )
 
     mocker.patch("fwt.cli.FWTPath", side_effect=mock_fwt_path)
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         test_path = cli.Path(test_file).absolute()
         test_path.parent.mkdir(parents=True)
         test_path.touch()
@@ -659,7 +659,7 @@ def test_rename_src_is_project_dir(runner: CliRunner, mocker: MockerFixture) -> 
         )
 
     mocker.patch("fwt.cli.FWTPath", side_effect=mock_fwt_path)
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         test_path = cli.Path(test_file).absolute()
         test_path.parent.mkdir(parents=True)
         test_path.touch()
@@ -695,7 +695,7 @@ def test_download_actors(runner: CliRunner, mocker: MockerFixture) -> None:
             )
         ),
     )
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         os.mkdir("test_dir")
         result = runner.invoke(
             cli.main,
@@ -735,7 +735,7 @@ def test_download_items(runner: CliRunner, mocker: MockerFixture) -> None:
             )
         ),
     )
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         os.mkdir("test_dir")
         result = runner.invoke(
             cli.main,
@@ -764,7 +764,7 @@ def test_download_items(runner: CliRunner, mocker: MockerFixture) -> None:
 
 
 def test_pull(runner: CliRunner) -> None:
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         os.mkdir("test-world")
         os.mkdir("test-world-2")
         result = runner.invoke(
@@ -794,7 +794,7 @@ def test_info(runner: CliRunner, is_project: bool, mocker: MockerFixture) -> Non
             project_type="world",
         ),
     )
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=os.getenv("RUNNER_TEMP")):
         os.mkdir("test-world")
         result = runner.invoke(cli.main, args=["info", "test-world"])
 
