@@ -491,7 +491,7 @@ def test_rename_src_is_project(runner: CliRunner, mocker: MockerFixture) -> None
                 to_fpd=mocker.MagicMock(
                     return_value="/path/to/foundrydata" + world_path.lstrip(".")
                 ),
-                is_project=path.endswith(test_file.lstrip(".")),
+                is_project=path.endswith(test_file.split("/")[-1]),
                 is_project_dir=mocker.MagicMock(return_value=False),
             ),
         )
