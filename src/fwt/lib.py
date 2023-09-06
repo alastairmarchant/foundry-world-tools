@@ -85,16 +85,13 @@ def find_foundry_user_dir(search_path: StrPath) -> Path:
     """
     try:
         search_path = Path(search_path)
-        fvtt_options = Path(
-            next(
-                f
-                for p in (search_path, *search_path.parents)
-                # ! Why is this not just ``p.glob("Config/options.json")``?
-                for f in p.glob("Config/*.json")
-                if f.name == "options.json"
-            )
+        fvtt_options = next(
+            f
+            for p in (search_path, *search_path.parents)
+            for f in p.glob("Config/options.json")
         )
-        data_path = json.load(fvtt_options.open())["dataPath"]
+        with fvtt_options.open() as options_file:
+            data_path = json.load(options_file)["dataPath"]
         foundry_user_dir = Path(data_path) / "Data"
     except StopIteration as e:
         raise FUDNotFoundError(
@@ -104,19 +101,28 @@ def find_foundry_user_dir(search_path: StrPath) -> Path:
 
 
 def get_relative_to(path: StrPath, rs: StrPath) -> Path:
-    """Return the path relative to another path.
+    """Resolves ``rs`` in relation to ``path``.
 
     Args:
-        path: Original path.
-        rs: Path to get relative to.
+        path: Absolute path to resolve against.
+        rs: Path to resolve.
+
+    Example:
+        >>> str(
+        >>>     get_relative_to(
+        >>>         "/path/to/foundrydata/Data/worlds/test-world",
+        >>>         "../test-world-2",
+        >>>     )
+        >>> )
+        '/path/to/foundrydata/Data/worlds/test-world-2'
 
     Returns:
-        Path relative to ``rs``.
+        Absolute path to ``rs``.
     """
     logging.debug("get_relative_to: Got base %s and rel %s", path, rs)
     pobj = Path(path)
     path = Path(path)
-    # ! Can this just be done with ``Path.resolve``?
+    # ! Can this just be done with ``Path.resolve`` and/or ``Path.relative_to``?
     if ".." in str(rs):
         rp = path / rs
         for e in rp.relative_to(path).parts:
