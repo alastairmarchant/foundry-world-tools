@@ -248,7 +248,7 @@ class FWTPath(Path):
         return FWTPath(self.absolute())
 
 
-# TODO: Remove this
+# TODO: Remove this, path objects are supposed to be immutable
 def reinit_fwtpath(fwtpath: FWTPath, newpath: Path) -> None:
     """Reinitialise ``FWTPath`` instance to the new path.
 
@@ -293,7 +293,7 @@ def resolve_fvtt_path(
     else:
         logging.debug("Path is outside Foundry user directory. Possible symlink")
         symlink = True
-        fwtpath._fwt_rtp = None  # type: ignore
+        fwtpath._fwt_rtp = Path()
     if check_for_project or symlink:
         try:
             manafest = next(
@@ -356,6 +356,7 @@ class FWTConfig(UserDict):  # type: ignore
         config_file = Path(file_path)
         if "~" in str(file_path):
             h = config_file
+            # TODO: Replace with Path.expanduser
             self.config_file = Path(h.as_posix().replace("~", h.home().as_posix()))
         else:
             self.config_file = config_file
@@ -388,6 +389,7 @@ class FWTConfig(UserDict):  # type: ignore
             FWTPath.foundry_user_dir = fvtt_user_dir
         else:
             raise FWTConfigNoDataDirError("unable to determine fvtt_data_dir")
+        print()
 
     def load(self) -> None:
         """Load config data from file."""
@@ -476,7 +478,7 @@ class FWTFile:
             if new_path.is_dir() and not self.path.is_dir():
                 logging.debug(
                     "new path is dir and path is target updating new path to %s",
-                    new_path,
+                    new_path / self.path.name,
                 )
                 self.new_path = new_path / self.path.name
                 return
@@ -502,6 +504,7 @@ class FWTFile:
                 self.path,
                 self.new_path,
             )
+            return False
         os.renames(self.path, self.new_path)
         self.old_path = self.path
         self.path = self.new_path
@@ -531,6 +534,7 @@ class FWTFile:
             )
         os.makedirs(self.new_path.parent, exist_ok=True)
         shutil.copy2(self.path, self.new_path)
+        # TODO: This is only used in logging, does not need to be instance variable
         self.copy_of = self.path
         self.path = self.new_path
         self.new_path = None
@@ -559,18 +563,14 @@ class FWTFile:
         """String representation of target file absolute path."""
         return self.__str__()
 
-    # TODO: Replace this function
-    def __cmp__(self, other: object) -> bool:
-        """Deprecated since Python 3.0.
-
-        .. deprecated:: 3.0
-            Use :func:`__eq__` and :func:`__hash__`instead.
+    def __eq__(self, other: object) -> bool:
+        """Compares object string representations to determine if they are equal.
 
         Args:
-            other: Other object to compare against.
+            other: The object to compare with.
 
         Returns:
-            If the file paths are equal.
+            True if the objects are equal, False otherwise.
         """
         return self.__str__() == other.__str__()
 
