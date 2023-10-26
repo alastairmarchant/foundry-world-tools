@@ -102,6 +102,7 @@ tests = ["tests", "*/tests"]
 [tool.coverage.run]
 branch = true
 source = ["fwt", "tests"]
+omit = ["__main__.py"]
 
 [tool.coverage.report]
 show_missing = true
