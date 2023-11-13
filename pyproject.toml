@@ -92,6 +92,12 @@ sphinx-autobuild = ">=2021.3.14"
 sphinx-click = ">=3.0.2"
 myst-parser = {version = ">=0.16.1"}
 
+[tool.poetry.group.functional]
+optional = true
+
+[tool.poetry.group.functional.dependencies]
+behave = {git = "https://github.com/behave/behave.git"}
+
 [tool.poetry.scripts]
 fwt = "fwt.__main__:main"
 
